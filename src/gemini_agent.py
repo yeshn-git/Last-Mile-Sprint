@@ -3,12 +3,19 @@ Gemini AI agent for transfer verdict decisions.
 
 Uses the Gemini Flash model to analyze commuter timing data and
 provide an actionable verdict: WALK, WALK BRISKLY, SPRINT, or WAIT FOR NEXT.
+
+Quota strategy:
+  - Try gemini-2.5-flash first (primary, best quality)
+  - On 429 quota exhaustion, fall back to gemini-1.5-flash (separate quota bucket)
+  - On any other failure, use local rule-based fallback
 """
 
 import os
 import time
+import traceback
 
 from google import genai
+from google.genai.errors import ClientError
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -19,6 +26,15 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 print(f"[gemini_agent] Key loaded: {bool(GEMINI_API_KEY)}")
 
 _client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+
+PRIMARY_MODEL  = "gemini-2.5-flash"
+FALLBACK_MODEL = "gemini-1.5-flash"
+
+
+def _call_model(model: str, prompt: str) -> str:
+    """Call a specific Gemini model and return the text response."""
+    response = _client.models.generate_content(model=model, contents=prompt)
+    return response.text.strip()
 
 
 def get_transfer_verdict(
@@ -31,19 +47,8 @@ def get_transfer_verdict(
     """
     Get a transfer verdict from Gemini based on timing data.
 
-    Calls the Gemini Flash model with a structured prompt to determine
-    whether the commuter should WALK, WALK BRISKLY, SPRINT, or WAIT FOR NEXT.
-    Retries once after 2 seconds on failure.
-
-    Args:
-        stop_name: Name of the transfer stop.
-        vehicle_name: Name of the connecting vehicle.
-        buffer_seconds: Time buffer in seconds (negative = already missed).
-        walk_time_seconds: Estimated walk time in seconds.
-        distance_meters: Walking distance in meters.
-
-    Returns:
-        Raw text response from Gemini containing the verdict and reason.
+    Tries gemini-2.5-flash; on 429 falls back to gemini-1.5-flash;
+    on any other error falls back to local rule-based verdict.
     """
     if _client is None:
         print("[gemini_agent] No API key — using local fallback verdict.")
@@ -53,20 +58,45 @@ def get_transfer_verdict(
         stop_name, vehicle_name, buffer_seconds, walk_time_seconds, distance_meters
     )
 
-    for attempt in range(2):
-        try:
-            response = _client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt,
-            )
-            return response.text.strip()
-        except Exception as e:
-            print(f"[gemini_agent] Attempt {attempt + 1} failed: {type(e).__name__}: {e}")
-            if attempt == 0:
-                print("[gemini_agent] Retrying in 2 seconds…")
-                time.sleep(2)
-            else:
-                return f"[Gemini unavailable: {type(e).__name__}: {e}] — Fallback: {_local_verdict(buffer_seconds)}"
+    # ── Attempt 1: primary model ──────────────────────────────────────────────
+    try:
+        result = _call_model(PRIMARY_MODEL, prompt)
+        print(f"[gemini_agent] {PRIMARY_MODEL} OK")
+        return result
+    except ClientError as e:
+        if e.code == 429:
+            print(f"[gemini_agent] {PRIMARY_MODEL} quota exhausted (429) — trying {FALLBACK_MODEL}")
+        else:
+            print(f"[gemini_agent] {PRIMARY_MODEL} ClientError {e.code}: {e.message}")
+            traceback.print_exc()
+    except Exception as e:
+        print(f"[gemini_agent] {PRIMARY_MODEL} unexpected error: {type(e).__name__}: {e}")
+        traceback.print_exc()
+
+    # ── Attempt 2: fallback model (separate quota) ────────────────────────────
+    try:
+        result = _call_model(FALLBACK_MODEL, prompt)
+        print(f"[gemini_agent] {FALLBACK_MODEL} OK (fallback)")
+        return result
+    except ClientError as e:
+        if e.code == 429:
+            print(f"[gemini_agent] {FALLBACK_MODEL} also quota exhausted — using local verdict")
+        else:
+            print(f"[gemini_agent] {FALLBACK_MODEL} ClientError {e.code}: {e.message}")
+            traceback.print_exc()
+    except Exception as e:
+        print(f"[gemini_agent] {FALLBACK_MODEL} unexpected error: {type(e).__name__}: {e}")
+        traceback.print_exc()
+
+    # ── Attempt 3: retry primary after brief wait ─────────────────────────────
+    print("[gemini_agent] Waiting 3s then retrying primary…")
+    time.sleep(3)
+    try:
+        result = _call_model(PRIMARY_MODEL, prompt)
+        print(f"[gemini_agent] {PRIMARY_MODEL} OK (retry)")
+        return result
+    except Exception as e:
+        print(f"[gemini_agent] All Gemini attempts failed. Last error: {type(e).__name__}: {e}")
 
     return _local_verdict(buffer_seconds)
 

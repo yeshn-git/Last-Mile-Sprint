@@ -69,8 +69,10 @@ export default function DepartureCard({ departure }) {
     <div
       className="flex flex-col overflow-hidden"
       style={{
-        backgroundColor: '#141414',
-        border: '1px solid #2A2A2A',
+        backgroundColor: 'rgba(13,13,13,0.85)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+        border: '1px solid rgba(42,42,42,0.8)',
         borderRadius: 10,
         minWidth: 0,
       }}

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Sidebar from './components/Sidebar'
 import DepartureCard from './components/DepartureCard'
 import LoadingSpinner from './components/LoadingSpinner'
+import MapBackground from './components/MapBackground'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -9,11 +10,11 @@ const STOPS = ['Majestic', 'Silk Board', 'KR Puram', 'Whitefield', 'Hebbal']
 const PACES = ['slow', 'normal', 'brisk']
 
 export default function App() {
-  const [stop, setStop]           = useState('Majestic')
-  const [pace, setPace]           = useState('normal')
+  const [stop, setStop]             = useState('Majestic')
+  const [pace, setPace]             = useState('normal')
   const [departures, setDepartures] = useState([])
-  const [loading, setLoading]     = useState(false)
-  const [error, setError]         = useState(null)
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState(null)
 
   const fetchDepartures = useCallback(async () => {
     setLoading(true)
@@ -43,8 +44,10 @@ export default function App() {
   }, [fetchDepartures])
 
   return (
-    <div className="flex h-full w-full overflow-hidden" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
-
+    <div
+      className="flex h-full w-full overflow-hidden"
+      style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+    >
       {/* ── Sidebar ── */}
       <Sidebar
         stops={STOPS}
@@ -55,155 +58,87 @@ export default function App() {
         onPaceChange={setPace}
       />
 
-      {/* ── Main canvas ── */}
-      <main
-        className="flex-1 overflow-auto relative"
-        style={{
-          backgroundColor: '#0a0f1a',
-          backgroundImage: `
-            linear-gradient(rgba(32,178,170,0.07) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(32,178,170,0.07) 1px, transparent 1px),
-            linear-gradient(rgba(32,178,170,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(32,178,170,0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: '100px 100px, 100px 100px, 20px 20px, 20px 20px',
-        }}
-      >
-        {/* City watermark */}
-        <span
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            fontSize: 200,
-            fontWeight: 900,
-            color: '#ffffff',
-            opacity: 0.03,
-            letterSpacing: '0.1em',
-            userSelect: 'none',
-            pointerEvents: 'none',
-            whiteSpace: 'nowrap',
-            lineHeight: 1,
-            zIndex: 0,
-          }}
-        >
-          BENGALURU
-        </span>
+      {/* ── Main panel ── */}
+      <div className="flex-1 flex flex-col overflow-hidden relative">
 
-        {/* Animated platform ping dots */}
-        {[
-          { left: '30%', top: '40%' },
-          { left: '50%', top: '40%' },
-          { left: '70%', top: '40%' },
-        ].map((pos, i) => (
-          <span
-            key={i}
-            aria-hidden="true"
+        {/* ── Map fills the entire panel (z-0) ── */}
+        <MapBackground activeStop={stop} />
+
+        {/* ── UI layer floats above the map (z-10+) ── */}
+        <div className="relative flex flex-col h-full" style={{ zIndex: 10 }}>
+
+          {/* Header bar */}
+          <div
+            className="shrink-0 px-6 py-3 flex items-center gap-3 border-b"
             style={{
-              position: 'absolute',
-              left: pos.left,
-              top: pos.top,
-              pointerEvents: 'none',
-              zIndex: 1,
+              backgroundColor: 'rgba(10,15,26,0.80)',
+              borderColor: '#1a3030',
+              backdropFilter: 'blur(8px)',
             }}
           >
-            {/* Ping ring */}
-            <span
-              style={{
-                position: 'absolute',
-                width: 16,
-                height: 16,
-                borderRadius: '50%',
-                backgroundColor: 'rgba(0,191,165,0.4)',
-                transform: 'translate(-50%, -50%)',
-                animation: `ping 1.5s cubic-bezier(0,0,0.2,1) infinite`,
-                animationDelay: `${i * 0.4}s`,
-              }}
-            />
-            {/* Solid dot */}
-            <span
-              style={{
-                position: 'absolute',
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                backgroundColor: '#00BFA5',
-                transform: 'translate(-50%, -50%)',
-              }}
-            />
-          </span>
-        ))}
+            <span style={{ color: '#00BFA5', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Live Departures
+            </span>
+            <span style={{ color: '#1a3030' }}>·</span>
+            <span style={{ color: '#5A5A5A', fontSize: 12 }}>{stop}</span>
+            <span style={{ color: '#1a3030' }}>·</span>
+            <span style={{ color: '#5A5A5A', fontSize: 12, textTransform: 'capitalize' }}>{pace} pace</span>
+          </div>
 
-        <style>{`
-          @keyframes ping {
-            75%, 100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
-          }
-        `}</style>
-        {/* Header bar */}
-        <div
-          className="sticky top-0 z-10 px-6 py-3 flex items-center gap-3 border-b"
-          style={{ backgroundColor: 'rgba(13,13,13,0.85)', borderColor: '#2A2A2A', backdropFilter: 'blur(8px)' }}
-        >
-          <span style={{ color: '#00BFA5', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Live Departures
-          </span>
-          <span style={{ color: '#2A2A2A' }}>·</span>
-          <span style={{ color: '#5A5A5A', fontSize: 12 }}>{stop}</span>
-          <span style={{ color: '#2A2A2A' }}>·</span>
-          <span style={{ color: '#5A5A5A', fontSize: 12, textTransform: 'capitalize' }}>{pace} pace</span>
-        </div>
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-auto p-6">
 
-        {/* Content area */}
-        <div className="p-6">
-          {loading && (
-            <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 120px)' }}>
-              <LoadingSpinner />
-            </div>
-          )}
-
-          {!loading && error && (
-            <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: 'calc(100vh - 120px)' }}>
-              <div
-                className="px-5 py-4 rounded-lg border text-center"
-                style={{ backgroundColor: '#1C1C1C', borderColor: '#EF4444', maxWidth: 360 }}
-              >
-                <p style={{ color: '#EF4444', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Connection Error</p>
-                <p style={{ color: '#A0A0A0', fontSize: 12 }}>{error}</p>
+            {loading && (
+              <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 120px)' }}>
+                <LoadingSpinner />
               </div>
-              <button
-                onClick={fetchDepartures}
-                className="px-4 py-2 rounded-md text-sm font-semibold transition-colors"
-                style={{ backgroundColor: '#00BFA5', color: '#0D0D0D', fontSize: 13 }}
-                onMouseEnter={e => e.target.style.backgroundColor = '#00897B'}
-                onMouseLeave={e => e.target.style.backgroundColor = '#00BFA5'}
+            )}
+
+            {!loading && error && (
+              <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: 'calc(100vh - 120px)' }}>
+                <div
+                  className="px-5 py-4 rounded-lg border text-center"
+                  style={{
+                    backgroundColor: 'rgba(13,13,13,0.85)',
+                    backdropFilter: 'blur(4px)',
+                    borderColor: '#EF4444',
+                    maxWidth: 360,
+                  }}
+                >
+                  <p style={{ color: '#EF4444', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Connection Error</p>
+                  <p style={{ color: '#A0A0A0', fontSize: 12 }}>{error}</p>
+                </div>
+                <button
+                  onClick={fetchDepartures}
+                  className="px-4 py-2 rounded-md text-sm font-semibold"
+                  style={{ backgroundColor: '#00BFA5', color: '#0D0D0D', fontSize: 13 }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#00897B'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = '#00BFA5'}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {!loading && !error && departures.length > 0 && (
+              <div
+                className="grid gap-5"
+                style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
               >
-                Retry
-              </button>
-            </div>
-          )}
+                {departures.map((dep, i) => (
+                  <DepartureCard key={i} departure={dep} />
+                ))}
+              </div>
+            )}
 
-          {!loading && !error && departures.length > 0 && (
-            <div
-              className="grid gap-5"
-              style={{
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              }}
-            >
-              {departures.map((dep, i) => (
-                <DepartureCard key={i} departure={dep} />
-              ))}
-            </div>
-          )}
-
-          {!loading && !error && departures.length === 0 && (
-            <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 120px)' }}>
-              <p style={{ color: '#5A5A5A', fontSize: 13 }}>No departures found for {stop}.</p>
-            </div>
-          )}
+            {!loading && !error && departures.length === 0 && (
+              <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 120px)' }}>
+                <p style={{ color: '#5A5A5A', fontSize: 13 }}>No departures found for {stop}.</p>
+              </div>
+            )}
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   )
 }
