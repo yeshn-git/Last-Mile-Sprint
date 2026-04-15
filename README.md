@@ -75,6 +75,58 @@ python -m pytest tests/ -v
 
 ---
 
+## 🌐 Web UI (React Frontend + FastAPI Backend)
+
+### Quick Start (both servers at once)
+
+```bash
+bash start.sh
+```
+
+This starts:
+- **Backend** → `http://localhost:8000`
+- **Frontend** → `http://localhost:5173`
+
+### Manual Setup
+
+#### Backend (FastAPI)
+
+```bash
+pip install -r requirements.txt
+uvicorn backend.server:app --reload --port 8000
+```
+
+API endpoints:
+| Method | Path       | Description                          |
+|--------|-----------|--------------------------------------|
+| `POST` | `/analyze` | Analyze a stop + pace, return departures |
+| `GET`  | `/health`  | Liveness check → `{ "status": "ok" }` |
+
+Example request:
+```bash
+curl -X POST http://localhost:8000/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"stop": "Majestic", "pace": "normal"}'
+```
+
+#### Frontend (Vite + React)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser.
+
+### UI Screenshot
+
+> _Screenshot placeholder — run both servers and open http://localhost:5173_
+>
+> ![Last-Mile Sprint UI](docs/screenshot.png)
+
+---
+
 ## 📋 Sample Output
 
 ```
