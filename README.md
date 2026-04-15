@@ -8,7 +8,7 @@
 
 **Urban Mobility — Transfer Timing Assistant**
 
-Helps commuters at major Bengaluru transit hubs make real-time decisions about catching connecting buses and metro services, powered by simulated transit data and the Gemini API.
+Helps commuters at major Bengaluru transit hubs make real-time decisions about catching connecting buses and metro services, powered by simulated transit data and a smart local verdict engine.
 
 ---
 
@@ -21,7 +21,7 @@ Last-Mile Sprint uses a **4-module architecture**:
 | **Transit Feed** | `src/transit_feed.py` | Simulated GTFS-style departure data for 5 Bengaluru stops (Majestic, Silk Board, KR Puram, Whitefield, Hebbal). Each stop has 3 connecting vehicles with departure times relative to "now". |
 | **Maps Client** | `src/maps_client.py` | Wraps the Google Maps Routes API to get real walking distances. Falls back to simulated distances if the API is unavailable or fails. |
 | **Pace Engine** | `src/pace_engine.py` | Defines 3 pace profiles (slow: 60m/min, normal: 80m/min, brisk: 100m/min) and calculates walk time and time buffer for each departure. |
-| **Gemini Agent** | `src/gemini_agent.py` | Sends timing data to Gemini Flash and receives an actionable verdict: WALK, WALK BRISKLY, SPRINT, or WAIT FOR NEXT. Includes a local fallback if the API is unavailable. |
+| **Smart Verdict Engine** | `src/gemini_agent.py` | Local rule-based engine that analyzes buffer time and provides actionable verdicts: WALK / WALK BRISKLY / SPRINT / WAIT FOR NEXT. No external API required. |
 
 **Flow:**
 ```
@@ -38,13 +38,12 @@ CLI Input → Transit Feed → Maps Client → Pace Engine → Gemini Agent → 
 cp .env.example .env
 ```
 
-Edit `.env` and add your API keys:
+Edit `.env` and add your Maps API key (optional — falls back to simulated distances):
 ```
-GEMINI_API_KEY=your_actual_gemini_api_key
-MAPS_API_KEY=your_actual_maps_api_key
+MAPS_API_KEY=your_google_maps_api_key
 ```
 
-> **Note:** The tool works without API keys — it falls back to simulated distances and a local verdict engine.
+> **Note:** No Gemini API key required. Verdicts are generated locally with zero latency.
 
 ### 2. Install dependencies
 

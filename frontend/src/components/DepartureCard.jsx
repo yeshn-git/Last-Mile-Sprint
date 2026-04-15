@@ -1,11 +1,18 @@
+/** Strip legacy "[Gemini unavailable: ...] — Fallback: " prefixes if present. */
+function cleanVerdict(raw) {
+  // Remove bracket-prefixed error text: "[SomeError: msg] — Fallback: WALK — ..."
+  const bracketMatch = raw.match(/\[.*?\]\s*—\s*Fallback:\s*(.*)/s)
+  if (bracketMatch) return bracketMatch[1].trim()
+  return raw.trim()
+}
+
 function getVerdictStyle(verdict) {
-  const v = verdict.toUpperCase()
+  const v = cleanVerdict(verdict).toUpperCase()
   if (v.startsWith('WALK BRISKLY'))  return { bg: '#EAB308', label: 'WALK BRISKLY' }
   if (v.startsWith('SPRINT'))        return { bg: '#F97316', label: 'SPRINT' }
   if (v.startsWith('WAIT FOR NEXT')) return { bg: '#EF4444', label: 'WAIT FOR NEXT' }
   if (v.startsWith('WALK'))          return { bg: '#22C55E', label: 'WALK' }
-  // fallback — try to extract leading keyword
-  return { bg: '#6B7280', label: verdict.split(' — ')[0].split(':')[0].substring(0, 20) }
+  return { bg: '#6B7280', label: v.split(' — ')[0].substring(0, 20) }
 }
 
 function formatTime(isoString) {
@@ -57,10 +64,11 @@ export default function DepartureCard({ departure }) {
   const { vehicle, platform, departure_time, distance_m, walk_time_s, buffer_s, verdict } = departure
   const { bg: verdictBg, label: verdictLabel } = getVerdictStyle(verdict)
 
-  // Extract the reason text after the verdict label + dash
+  // Extract the reason text after the verdict keyword + dash (from the cleaned string)
   const reasonText = (() => {
-    const dashIdx = verdict.indexOf(' — ')
-    return dashIdx !== -1 ? verdict.slice(dashIdx + 3) : ''
+    const clean = cleanVerdict(verdict)
+    const dashIdx = clean.indexOf(' — ')
+    return dashIdx !== -1 ? clean.slice(dashIdx + 3) : ''
   })()
 
   const bufferColor = buffer_s < 0 ? '#EF4444' : buffer_s < 30 ? '#F97316' : buffer_s < 120 ? '#EAB308' : '#22C55E'
