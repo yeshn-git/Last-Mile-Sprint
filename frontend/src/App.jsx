@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Component } from 'react'
 import Sidebar from './components/Sidebar'
 import DepartureCard from './components/DepartureCard'
 import LoadingSpinner from './components/LoadingSpinner'
@@ -9,7 +9,36 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const STOPS = ['Majestic', 'Silk Board', 'KR Puram', 'Whitefield', 'Hebbal']
 const PACES = ['slow', 'normal', 'brisk']
 
-export default function App() {
+// ── Error boundary — prevents blank page on any render crash ─────────────────
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null } }
+  static getDerivedStateFromError(e) { return { error: e } }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          height: '100%', backgroundColor: '#0D0D0D', flexDirection: 'column', gap: 12,
+        }}>
+          <p style={{ color: '#EF4444', fontFamily: 'monospace', fontSize: 13, margin: 0 }}>
+            Render error: {this.state.error.message}
+          </p>
+          <button
+            onClick={() => this.setState({ error: null })}
+            style={{ padding: '6px 16px', backgroundColor: '#00BFA5', color: '#0D0D0D',
+                     border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}
+          >
+            Retry
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
+// ── Main app ──────────────────────────────────────────────────────────────────
+function AppInner() {
   const [stop, setStop]             = useState('Majestic')
   const [pace, setPace]             = useState('normal')
   const [departures, setDepartures] = useState([])
@@ -45,8 +74,13 @@ export default function App() {
 
   return (
     <div
-      className="flex h-full w-full overflow-hidden"
-      style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+      style={{
+        display: 'flex',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        fontFamily: "'Inter', system-ui, sans-serif",
+      }}
     >
       {/* ── Sidebar ── */}
       <Sidebar
@@ -59,59 +93,63 @@ export default function App() {
       />
 
       {/* ── Main panel ── */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
 
-        {/* ── Map fills the entire panel (z-0) ── */}
+        {/* Map layer — position:absolute, fills parent, z-index 0 */}
         <MapBackground activeStop={stop} />
 
-        {/* ── UI layer floats above the map (z-10+) ── */}
-        <div className="relative flex flex-col h-full" style={{ zIndex: 10 }}>
+        {/* UI layer — flex-1 so it fills height; z-index above map */}
+        <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
           {/* Header bar */}
           <div
-            className="shrink-0 px-6 py-3 flex items-center gap-3 border-b"
             style={{
-              backgroundColor: 'rgba(10,15,26,0.80)',
-              borderColor: '#1a3030',
+              flexShrink: 0,
+              padding: '10px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              borderBottom: '1px solid #1a3030',
+              backgroundColor: 'rgba(10,15,26,0.85)',
               backdropFilter: 'blur(8px)',
             }}
           >
-            <span style={{ color: '#00BFA5', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <span style={{ color: '#00BFA5', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
               Live Departures
             </span>
-            <span style={{ color: '#1a3030' }}>·</span>
+            <span style={{ color: '#2A2A2A' }}>·</span>
             <span style={{ color: '#5A5A5A', fontSize: 12 }}>{stop}</span>
-            <span style={{ color: '#1a3030' }}>·</span>
+            <span style={{ color: '#2A2A2A' }}>·</span>
             <span style={{ color: '#5A5A5A', fontSize: 12, textTransform: 'capitalize' }}>{pace} pace</span>
           </div>
 
-          {/* Scrollable content area */}
-          <div className="flex-1 overflow-auto p-6">
+          {/* Scrollable cards area */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
 
             {loading && (
-              <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 120px)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
                 <LoadingSpinner />
               </div>
             )}
 
             {!loading && error && (
-              <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: 'calc(100vh - 120px)' }}>
-                <div
-                  className="px-5 py-4 rounded-lg border text-center"
-                  style={{
-                    backgroundColor: 'rgba(13,13,13,0.85)',
-                    backdropFilter: 'blur(4px)',
-                    borderColor: '#EF4444',
-                    maxWidth: 360,
-                  }}
-                >
-                  <p style={{ color: '#EF4444', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Connection Error</p>
-                  <p style={{ color: '#A0A0A0', fontSize: 12 }}>{error}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16 }}>
+                <div style={{
+                  padding: '16px 20px',
+                  borderRadius: 8,
+                  border: '1px solid #EF4444',
+                  backgroundColor: 'rgba(13,13,13,0.9)',
+                  backdropFilter: 'blur(4px)',
+                  maxWidth: 360,
+                  textAlign: 'center',
+                }}>
+                  <p style={{ color: '#EF4444', fontSize: 13, fontWeight: 600, margin: '0 0 6px' }}>Connection Error</p>
+                  <p style={{ color: '#A0A0A0', fontSize: 12, margin: 0 }}>{error}</p>
                 </div>
                 <button
                   onClick={fetchDepartures}
-                  className="px-4 py-2 rounded-md text-sm font-semibold"
-                  style={{ backgroundColor: '#00BFA5', color: '#0D0D0D', fontSize: 13 }}
+                  style={{ padding: '8px 20px', backgroundColor: '#00BFA5', color: '#0D0D0D',
+                           border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
                   onMouseEnter={e => e.currentTarget.style.backgroundColor = '#00897B'}
                   onMouseLeave={e => e.currentTarget.style.backgroundColor = '#00BFA5'}
                 >
@@ -121,10 +159,11 @@ export default function App() {
             )}
 
             {!loading && !error && departures.length > 0 && (
-              <div
-                className="grid gap-5"
-                style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
-              >
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: 20,
+              }}>
                 {departures.map((dep, i) => (
                   <DepartureCard key={i} departure={dep} />
                 ))}
@@ -132,7 +171,7 @@ export default function App() {
             )}
 
             {!loading && !error && departures.length === 0 && (
-              <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 120px)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
                 <p style={{ color: '#5A5A5A', fontSize: 13 }}>No departures found for {stop}.</p>
               </div>
             )}
@@ -140,5 +179,13 @@ export default function App() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppInner />
+    </ErrorBoundary>
   )
 }

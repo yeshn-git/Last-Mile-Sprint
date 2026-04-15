@@ -64,12 +64,15 @@ export default function Sidebar({ stops, paces, activeStop, activePace, onStopCh
                     fontWeight: isActive ? 600 : 500,
                     color: isActive ? '#00BFA5' : '#A0A0A0',
                     backgroundColor: isActive ? 'rgba(0,191,165,0.08)' : 'transparent',
-                    borderLeft: isActive ? '3px solid #00BFA5' : '3px solid transparent',
-                    cursor: 'pointer',
+                    // border shorthand must come BEFORE borderLeft so longhand wins
                     border: 'none',
                     borderLeft: isActive ? '3px solid #00BFA5' : '3px solid transparent',
+                    cursor: 'pointer',
                     outline: 'none',
                     transition: 'all 0.15s ease',
+                    width: '100%',
+                    textAlign: 'left',
+                    borderRadius: 6,
                   }}
                   onMouseEnter={e => {
                     if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'
