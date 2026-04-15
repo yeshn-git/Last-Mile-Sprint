@@ -6,6 +6,7 @@ provide an actionable verdict: WALK, WALK BRISKLY, SPRINT, or WAIT FOR NEXT.
 """
 
 import os
+import time
 
 from google import genai
 from dotenv import load_dotenv
@@ -13,6 +14,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+# Debug: confirm key was loaded from .env
+print(f"[gemini_agent] Key loaded: {bool(GEMINI_API_KEY)}")
 
 _client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
@@ -29,6 +33,7 @@ def get_transfer_verdict(
 
     Calls the Gemini Flash model with a structured prompt to determine
     whether the commuter should WALK, WALK BRISKLY, SPRINT, or WAIT FOR NEXT.
+    Retries once after 2 seconds on failure.
 
     Args:
         stop_name: Name of the transfer stop.
@@ -40,18 +45,30 @@ def get_transfer_verdict(
     Returns:
         Raw text response from Gemini containing the verdict and reason.
     """
+    if _client is None:
+        print("[gemini_agent] No API key — using local fallback verdict.")
+        return _local_verdict(buffer_seconds)
+
     prompt = _build_prompt(
         stop_name, vehicle_name, buffer_seconds, walk_time_seconds, distance_meters
     )
 
-    try:
-        response = _client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-        )
-        return response.text.strip()
-    except Exception as e:
-        return f"[Gemini unavailable: {e}] — Fallback: {_local_verdict(buffer_seconds)}"
+    for attempt in range(2):
+        try:
+            response = _client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+            )
+            return response.text.strip()
+        except Exception as e:
+            print(f"[gemini_agent] Attempt {attempt + 1} failed: {type(e).__name__}: {e}")
+            if attempt == 0:
+                print("[gemini_agent] Retrying in 2 seconds…")
+                time.sleep(2)
+            else:
+                return f"[Gemini unavailable: {type(e).__name__}: {e}] — Fallback: {_local_verdict(buffer_seconds)}"
+
+    return _local_verdict(buffer_seconds)
 
 
 def _build_prompt(

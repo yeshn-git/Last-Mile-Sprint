@@ -59,14 +59,88 @@ export default function App() {
       <main
         className="flex-1 overflow-auto relative"
         style={{
-          backgroundColor: '#0D0D0D',
+          backgroundColor: '#0a0f1a',
           backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+            linear-gradient(rgba(32,178,170,0.07) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(32,178,170,0.07) 1px, transparent 1px),
+            linear-gradient(rgba(32,178,170,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(32,178,170,0.03) 1px, transparent 1px)
           `,
-          backgroundSize: '40px 40px',
+          backgroundSize: '100px 100px, 100px 100px, 20px 20px, 20px 20px',
         }}
       >
+        {/* City watermark */}
+        <span
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            fontSize: 200,
+            fontWeight: 900,
+            color: '#ffffff',
+            opacity: 0.03,
+            letterSpacing: '0.1em',
+            userSelect: 'none',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+            lineHeight: 1,
+            zIndex: 0,
+          }}
+        >
+          BENGALURU
+        </span>
+
+        {/* Animated platform ping dots */}
+        {[
+          { left: '30%', top: '40%' },
+          { left: '50%', top: '40%' },
+          { left: '70%', top: '40%' },
+        ].map((pos, i) => (
+          <span
+            key={i}
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              left: pos.left,
+              top: pos.top,
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          >
+            {/* Ping ring */}
+            <span
+              style={{
+                position: 'absolute',
+                width: 16,
+                height: 16,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(0,191,165,0.4)',
+                transform: 'translate(-50%, -50%)',
+                animation: `ping 1.5s cubic-bezier(0,0,0.2,1) infinite`,
+                animationDelay: `${i * 0.4}s`,
+              }}
+            />
+            {/* Solid dot */}
+            <span
+              style={{
+                position: 'absolute',
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                backgroundColor: '#00BFA5',
+                transform: 'translate(-50%, -50%)',
+              }}
+            />
+          </span>
+        ))}
+
+        <style>{`
+          @keyframes ping {
+            75%, 100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+          }
+        `}</style>
         {/* Header bar */}
         <div
           className="sticky top-0 z-10 px-6 py-3 flex items-center gap-3 border-b"
