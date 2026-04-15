@@ -32,21 +32,13 @@ CLI Input → Transit Feed → Maps Client → Pace Engine → Gemini Agent → 
 
 ## 🚀 How to Run
 
-### 1. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Set up environment variables
-
-Copy the example file and add your API keys:
+### 1. Set up environment variables
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env`:
+Edit `.env` and add your API keys:
 ```
 GEMINI_API_KEY=your_actual_gemini_api_key
 MAPS_API_KEY=your_actual_maps_api_key
@@ -54,13 +46,21 @@ MAPS_API_KEY=your_actual_maps_api_key
 
 > **Note:** The tool works without API keys — it falls back to simulated distances and a local verdict engine.
 
+### 2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
 ### 3. Run the CLI
 
 ```bash
-# Default pace (normal)
 python main.py --stop Majestic --pace normal
+```
 
-# Try different stops and paces
+Try different stops and paces:
+
+```bash
 python main.py --stop "Silk Board" --pace brisk
 python main.py --stop Hebbal --pace slow
 python main.py --stop Whitefield --pace normal
@@ -71,12 +71,6 @@ python main.py --stop "KR Puram" --pace brisk
 
 ```bash
 python -m pytest tests/ -v
-```
-
-Or with unittest:
-
-```bash
-python -m unittest tests.test_scenarios -v
 ```
 
 ---
@@ -92,29 +86,29 @@ python -m unittest tests.test_scenarios -v
   ── Departure 1 ─────────────────────────────────────────────
   🚍  Vehicle   : Bus 500D - Electronic City
   🔢  Platform  : Bay 3
-  🕐  Departs   : 14:34:12
-  📏  Distance  : 350m [fallback]
-  ⏱️   Walk Time : 263s (normal)
-  ⏳  Buffer    : -23s
-  🤖  Verdict   : WAIT FOR NEXT — The buffer is -23 seconds, you've missed this one.
+  🕐  Departs   : 11:26:58
+  📏  Distance  : 1220m
+  ⏱️   Walk Time : 915s (normal)
+  ⏳  Buffer    : -676s
+  🤖  Verdict   : WAIT FOR NEXT — The buffer is -676 seconds, meaning the bus departs well before you arrive.
 
   ── Departure 2 ─────────────────────────────────────────────
   🚍  Vehicle   : Metro Green Line - Nagasandra
   🔢  Platform  : Platform 1
-  🕐  Departs   : 14:37:12
-  📏  Distance  : 220m [fallback]
-  ⏱️   Walk Time : 165s (normal)
-  ⏳  Buffer    : +255s
-  🤖  Verdict   : WALK — You have a comfortable 255-second buffer to reach the platform.
+  🕐  Departs   : 11:29:58
+  📏  Distance  : 178m
+  ⏱️   Walk Time : 134s (normal)
+  ⏳  Buffer    : +281s
+  🤖  Verdict   : WALK — You have a comfortable 281-second buffer to reach the platform.
 
   ── Departure 3 ─────────────────────────────────────────────
   🚍  Vehicle   : Bus 401K - Bannerghatta
   🔢  Platform  : Bay 7
-  🕐  Departs   : 14:42:12
-  📏  Distance  : 500m [fallback]
-  ⏱️   Walk Time : 375s (normal)
-  ⏳  Buffer    : +345s
-  🤖  Verdict   : WALK — With a 345-second buffer, take your time and walk comfortably.
+  🕐  Departs   : 11:34:58
+  📏  Distance  : 953m
+  ⏱️   Walk Time : 715s (normal)
+  ⏳  Buffer    : -3s
+  🤖  Verdict   : WAIT FOR NEXT — The buffer is -3 seconds, meaning the vehicle departs before you arrive.
 
 =================================================================
   ✅  Analysis complete. Stay on schedule!
