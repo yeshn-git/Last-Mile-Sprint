@@ -1,0 +1,4 @@
+google-genai
+googlemaps
+python-dotenv
+requests

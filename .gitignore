@@ -1,0 +1,15 @@
+# Environment variables
+.env
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Virtual environment
+venv/
+
+# Package metadata
+*.egg-info/
