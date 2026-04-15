@@ -25,7 +25,7 @@ Last-Mile Sprint uses a **4-module architecture**:
 
 **Flow:**
 ```
-CLI Input → Transit Feed → Maps Client → Pace Engine → Gemini Agent → Formatted Output
+CLI Input → Transit Feed → Maps Client → Pace Engine → Verdict Engine → Formatted Output
 ```
 
 ---
@@ -173,7 +173,7 @@ Open `http://localhost:5173` in your browser.
 1. **Simulated Transit Data** — Departure times are generated relative to the current time using fixed offsets (not live GTFS feeds).
 2. **3 Pace Profiles** — Slow (60 m/min), Normal (80 m/min), Brisk (100 m/min) approximate real-world walking speeds.
 3. **Bengaluru Stops** — 5 major transfer hubs: Majestic, Silk Board, KR Puram, Whitefield, and Hebbal.
-4. **API Fallbacks** — Both the Maps API and Gemini API have graceful fallbacks, so the tool works without API keys (with simulated data and local verdicts).
+4. **API Fallbacks** — The Maps API has a graceful fallback to simulated distances, so the tool works fully without any API key. Verdicts are always generated locally with zero latency.
 5. **Walking Distance** — Distances represent the path from the arrival gate to the departure platform within the transit hub.
 
 ---
